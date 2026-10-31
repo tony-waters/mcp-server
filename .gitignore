@@ -34,3 +34,5 @@ build/
 
 # Claude Code hook state
 .claude/.verify-state
+.claude/settings.local.json
+.claude/.guard-state
