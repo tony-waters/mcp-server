@@ -148,6 +148,12 @@ check_rm() {
 
     [ "$recursive" -eq 1 ] || continue
 
+    # These are literal strings in the unexpanded command text, not paths to
+    # resolve — the hook sees the command before the shell touches it. The
+    # quoting is load-bearing: bash expands an unquoted ~ in a case pattern, so
+    # '~' would become /home/<user> and stop matching a literal ~. A command
+    # using $HOME instead is caught by the variable check below.
+    # shellcheck disable=SC2088
     case "$tok" in
       /|'/*'|'~'|'~/'|'*'|.|./|..|../)
         deny "Blocked by .claude/hooks/guard-bash.sh: refusing to recursively delete '$tok'." ;;

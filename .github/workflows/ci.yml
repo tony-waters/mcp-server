@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      # Fails the build on unformatted code rather than reformatting it, so CI
+      # never disagrees with the format-java.sh PostToolUse hook.
+      - name: Check formatting
+        run: ./mvnw -B -ntp spotless:check
+
+      - name: Build and test
+        run: ./mvnw -B -ntp verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
+
+  guards:
+    name: Permission guard hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The guard hooks are shell, not Java — no JDK needed. jq is preinstalled
+      # on the runner image and is the hooks' only dependency.
+      - name: Run guard hook test suite
+        run: .claude/hooks/test-guards.sh
+
+      # A guard that is not executable silently stops running as a hook.
+      - name: Check hooks are executable
+        run: |
+          missing=0
+          while IFS= read -r f; do
+            if [ ! -x "$f" ]; then
+              echo "not executable: $f"
+              missing=1
+            fi
+          done < <(find .claude/hooks -type f -name '*.sh')
+          exit "$missing"
+
+      # shellcheck is preinstalled on the ubuntu runner image. Its version
+      # there may differ from a local one, so a future release could surface
+      # findings that pass locally.
+      - name: Lint hooks
+        run: shellcheck -S warning .claude/hooks/*.sh .claude/hooks/lib/*.sh
