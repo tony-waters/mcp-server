@@ -118,6 +118,34 @@ allow_bash "rm -rf /tmp/claude-1000/scratch"                 "scratch under /tmp
 allow_bash "rm src/main/java/Old.java"                       "single source file"
 allow_bash "npm run build"                                   "'npm' is not 'rm'"
 
+
+echo "== scoping: mentions are not commands =="
+allow_bash 'echo "git push --force origin main"'            "pattern inside echo"
+allow_bash "git commit -m 'stop using git push --force'"    "pattern inside commit message"
+allow_bash 'grep -r "rm -rf /" .'                           "pattern as a grep needle"
+allow_bash 'cat <<EOF
+git push --force origin main
+rm -rf /
+./mvnw deploy
+EOF'                                                        "patterns inside heredoc body"
+allow_bash 'git commit -F - <<MSG
+Document the rm -rf and push --force rules
+MSG'                                                        "heredoc body on a real git command"
+allow_bash './mvnw test # we never deploy from here'        "pattern in a trailing comment"
+
+echo "== scoping: wrappers do not hide the command =="
+deny_bash  'bash -c "git push --force origin main"'          "bash -c"
+deny_bash  'sh -c "rm -rf /"'                                "sh -c"
+deny_bash  "sudo rm -rf /etc"                                "sudo"
+deny_bash  "FOO=1 git push --force"                          "leading env assignment"
+deny_bash  "env FOO=1 rm -rf /"                              "env wrapper plus assignment"
+deny_bash  "find . -name '*.tmp' | xargs rm -rf /"           "xargs"
+deny_bash  'echo hi; git push --force'                       "second segment of a list"
+deny_bash  'cd /tmp && ./mvnw deploy'                        "second segment of an and-list"
+deny_bash  'result=$(rm -rf /)'                              "inside command substitution"
+deny_bash  'cat foo | tee config/secrets.yml'                "piped tee still checked"
+allow_bash 'git log --oneline | head -5'                     "piped read-only git"
+
 echo
 echo "-------------------------------------"
 printf 'passed: %d   failed: %d\n' "$pass" "$fail"
