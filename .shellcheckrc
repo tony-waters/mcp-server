@@ -1,0 +1,3 @@
+# Follow `source` relative to the script, so hooks can share lib/ helpers.
+source-path=SCRIPTDIR
+external-sources=true
