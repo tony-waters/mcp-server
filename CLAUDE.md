@@ -3,7 +3,7 @@
 Configuration for AI behavior when interacting with Codacy's MCP Server
 
 ## After file edits
-- `.claude/hooks/codacy-analyze.sh` runs Codacy on every edited file automatically
+- `.claude/hooks/codacy-analyze.sh` runs Codacy (and ShellCheck for shell scripts) on every edited file
   and reports issues back; fix them rather than re-running the analysis by hand
 
 ## After ANY dependency installation
