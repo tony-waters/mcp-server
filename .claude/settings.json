@@ -15,14 +15,14 @@
       "Bash(wget:*)"
     ],
     "ask": [
-      "Bash(curl:*)",
+      "Bash(curl:*)"
+    ],
+    "allow": [
       "Bash(git push:*)",
       "Bash(git commit:*)",
       "Bash(gh pr merge:*)",
       "Bash(docker:*)",
-      "Bash(kubectl:*)"
-    ],
-    "allow": [
+      "Bash(kubectl:*)",
       "Bash(./mvnw test:*)",
       "Bash(./mvnw compile:*)",
       "Bash(./mvnw verify:*)",
